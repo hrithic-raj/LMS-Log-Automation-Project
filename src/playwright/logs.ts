@@ -1,5 +1,9 @@
 import { Page } from "playwright";
 import { LogActivity } from "../types/log.js";
+import {
+  isToday,
+  formatLmsInputDate,
+} from "../utils/date.js";
 
 const categoryMap: Record<string, string> = {
   Academic: "Academic",
@@ -21,31 +25,79 @@ export async function openLogPage(page: Page) {
   console.log("Log Page Opened.");
 }
 
-export async function createDayLog(page: Page) {
-  console.log("Opening New Log Dialog...");
 
+export async function createDayLog(
+  page: Page,
+  date: string
+) {
+
+  console.log(
+    `Creating Log -> ${date}`
+  );
+
+  // Open New Dialog
   await page.getByRole("button", {
     name: "New",
   }).click();
 
-  console.log("Creating Today's Log...");
+  // If not today, type the date
+  if (!isToday(date)) {
 
+    console.log(
+      `Selecting Date -> ${date}`
+    );
+
+    const input = page.getByRole("textbox", {
+      name: "Enter log date",
+    });
+
+
+    // await input.click();
+    await input.evaluate((el: HTMLInputElement) => el.focus());
+
+    // Select everything
+    await input.press("Control+A");
+
+    // Delete existing value
+    await input.press("Backspace");
+
+    // Type slowly
+    await page.keyboard.type(
+      formatLmsInputDate(date),
+      {
+        delay: 100,
+      }
+    );
+
+    // Leave the field
+    await input.press("Tab");
+
+    // If calendar opened, close it
+    await page.keyboard.press("Escape");
+
+    console.log(
+      "Input value:",
+      await input.inputValue()
+    );
+  }
+  // Green Tick
   await page
-    .locator('svg[data-testid="CheckCircleIcon"]')
-    .locator("..")
+    .getByRole("button")
+    .filter({ hasText: /^$/ })
+    .nth(4)
     .click();
 
-  // Wait until the Activities panel is rendered
+  // Wait until Activities panel opens
   await page.getByRole("heading", {
     name: "Activities",
-  }).waitFor({
-    state: "visible",
-  });
+  }).waitFor();
 
-  // Small wait because the right panel animates
   await page.waitForTimeout(500);
 
-  console.log("Today's log created.");
+  console.log(
+    `Log Created (${date})`
+  );
+
 }
 
 export async function addActivity(

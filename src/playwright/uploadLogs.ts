@@ -6,22 +6,26 @@ export async function uploadLogs(
   page: Page,
   activities: LogActivity[]
 ) {
+
   console.log(
     `Uploading ${activities.length} activities...\n`
   );
 
   for (let i = 0; i < activities.length; i++) {
 
-      console.log(
-          `Uploading ${i + 1}/${activities.length}`
-      );
+    console.log(
+      `[${i + 1}/${activities.length}] ${activities[i].description.split("\n")[0]}`
+    );
 
-      await addActivity(
-          page,
-          activities[i]
-      );
+    await addActivity(
+      page,
+      activities[i]
+    );
 
   }
 
-  console.log("\n✅ Upload Finished");
+  console.log(
+    "✅ Finished uploading all activities.\n"
+  );
+
 }

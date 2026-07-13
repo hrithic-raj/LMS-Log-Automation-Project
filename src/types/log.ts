@@ -1,10 +1,11 @@
 export interface LogActivity {
-    time: number;
-    category: string;
-    description: string;
+  time: number;
+  category: string;
+  description: string;
 }
 
 export interface DayLog {
-    date: string;
-    activities: LogActivity[];
+  date: string;
+  uploaded: boolean;
+  activities: LogActivity[];
 }

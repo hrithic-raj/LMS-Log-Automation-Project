@@ -17,7 +17,8 @@ function isHeading(
   paragraph: docs_v1.Schema$Paragraph
 ): boolean {
   return (
-    paragraph.paragraphStyle?.namedStyleType === "HEADING_1"
+    paragraph.paragraphStyle?.namedStyleType ===
+    "HEADING_1"
   );
 }
 
@@ -34,24 +35,79 @@ function isActivity(text: string): boolean {
 }
 
 function parseActivity(line: string): LogActivity {
-  const parts = line.split("|").map((p) => p.trim());
+  const parts = line
+    .split("|")
+    .map((p) => p.trim());
 
   if (parts.length < 3) {
-    throw new Error(`Invalid activity: ${line}`);
+    throw new Error(
+      `Invalid activity: ${line}`
+    );
   }
 
-  const [time, category, ...descriptionParts] = parts;
+  const [
+    time,
+    category,
+    ...descriptionParts
+  ] = parts;
 
   const minutes = Number(time);
 
   if (Number.isNaN(minutes)) {
-    throw new Error(`Invalid time: ${line}`);
+    throw new Error(
+      `Invalid time: ${line}`
+    );
   }
 
   return {
     time: minutes,
     category,
-    description: descriptionParts.join(" | "),
+    description:
+      descriptionParts.join(" | "),
+  };
+}
+
+/**
+ * Parses headings like:
+ *
+ * 🟡 11-07-2026
+ * ✅ 10-07-2026
+ *
+ * Returns:
+ * {
+ *   date:"11-07-2026",
+ *   uploaded:false
+ * }
+ */
+function parseHeading(text: string) {
+
+  const trimmed = text.trim();
+
+  if (trimmed.startsWith("✅")) {
+    return {
+      uploaded: true,
+      date: trimmed
+        .replace("✅", "")
+        .trim(),
+    };
+  }
+
+  if (trimmed.startsWith("🟡")) {
+    return {
+      uploaded: false,
+      date: trimmed
+        .replace("🟡", "")
+        .trim(),
+    };
+  }
+
+  // Backward compatibility
+  // Old documents without emoji
+  return {
+    uploaded: false,
+    date: trimmed
+      .replace(/^#\s*/, "")
+      .trim(),
   };
 }
 
@@ -62,9 +118,11 @@ export function parseLogs(
   const days: DayLog[] = [];
 
   let currentDay: DayLog | null = null;
-  let currentActivity: LogActivity | null = null;
+  let currentActivity: LogActivity | null =
+    null;
 
-  const content = document.body?.content ?? [];
+  const content =
+    document.body?.content ?? [];
 
   for (const item of content) {
 
@@ -72,7 +130,8 @@ export function parseLogs(
 
     const paragraph = item.paragraph;
 
-    const text = getParagraphText(paragraph);
+    const text =
+      getParagraphText(paragraph);
 
     if (!text) continue;
 
@@ -81,12 +140,17 @@ export function parseLogs(
       continue;
     }
 
-    // New day
+    // New Day
     if (isHeading(paragraph)) {
 
+      const heading =
+        parseHeading(text);
+
       currentDay = {
-        date: text.replace(/^#\s*/, ""),
-        activities: []
+        date: heading.date,
+        uploaded:
+          heading.uploaded,
+        activities: [],
       };
 
       days.push(currentDay);
@@ -98,25 +162,27 @@ export function parseLogs(
 
     if (!currentDay) continue;
 
-    // New activity
+    // New Activity
     if (isActivity(text)) {
 
-      currentActivity = parseActivity(text);
+      currentActivity =
+        parseActivity(text);
 
-      currentDay.activities.push(currentActivity);
+      currentDay.activities.push(
+        currentActivity
+      );
 
       continue;
     }
 
-    // Extra description line
+    // Multiline Description
     if (currentActivity) {
 
-      currentActivity.description =
-        currentActivity.description +
-        "\n" +
-        text;
+      currentActivity.description +=
+        "\n" + text;
 
     }
+
   }
 
   return days;
