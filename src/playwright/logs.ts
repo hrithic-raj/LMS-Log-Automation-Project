@@ -70,7 +70,7 @@ export async function createDayLog(
     );
 
     // Leave the field
-    await input.press("Tab");
+    // await input.press("Tab");
 
     // If calendar opened, close it
     await page.keyboard.press("Escape");
@@ -80,12 +80,27 @@ export async function createDayLog(
       await input.inputValue()
     );
   }
+  // await page.pause();
   // Green Tick
-  await page
-    .getByRole("button")
-    .filter({ hasText: /^$/ })
-    .nth(4)
-    .click();
+  // await page
+  //   .getByRole("button")
+  //   .filter({ hasText: /^$/ })
+  //   .nth(4)
+  //   .click();
+
+const dateInput = page.getByRole("textbox", {
+  name: "Enter log date",
+});
+
+const container = dateInput.locator(
+  "xpath=ancestor::div[contains(@class,'MuiGrid-root')][1]"
+);
+
+const greenTick = container.locator(
+  'button:has(svg[data-testid="CheckCircleIcon"])'
+);
+
+await greenTick.click();
 
   // Wait until Activities panel opens
   await page.getByRole("heading", {
